@@ -13,8 +13,11 @@ int main()
 	int score{0};
 	int lives{3};
 	// =================================================================
-
-	Bat bat(1920 / 2, 1080 - 50);
+	// Create a bat
+	Bat bat(1920 / 2, 1080 - 60);
+	// Create a ball
+	Ball ball(1920 / 2, 0);
+	ball.setDirections();
 	// =================================================================
 	sf::Text hud;
 	sf::Font font;
@@ -70,9 +73,50 @@ int main()
 		*/
 		sf::Time dt = clock.restart();
 		bat.update(dt);
+		ball.update(dt);
 		std::stringstream ss;
 		ss << "Score: " << score << " Lives: " << lives;
 		hud.setString(ss.str());
+		// ===========================================================
+		// Handle ball hitting the bottom
+		if (ball.getPosition().top > window.getSize().y)
+		{
+			// reverse the ball direction
+			ball.reboundBottom();
+			// Remove a life
+			lives--;
+			// Check for zero lives
+			if (lives < 1)
+			{
+				// reset the score
+				score = 0;
+				// reset the lives
+				lives = 3;
+			}
+			ball.resetSpeed();
+			ball.setDirections();
+		}
+		// Handle ball hitting top
+		if (ball.getPosition().top < 0)
+		{
+			ball.reboundBatOrTop();
+			// Add a point to the players score
+			score++;
+			ball.increaseSpeed();
+		}
+		// Handle ball hitting sides
+		if (ball.getPosition().left < 0 ||
+			ball.getPosition().left + ball.getPosition().width > window.getSize().x)
+		{
+			ball.reboundSides();
+		}
+		// Has the ball hit the bat?
+		if (ball.getPosition().intersects(bat.getPosition()))
+		{
+			// Hit detected so reverse the ball and score a point
+			ball.reboundBatOrTop();
+		}
+
 		/*
 		Draw the bat, the ball and the HUD
 		*****************************
@@ -82,6 +126,7 @@ int main()
 		window.clear();
 		window.draw(hud);
 		window.draw(bat.getShape());
+		window.draw(ball.getShape());
 		window.display();
 	}
 	// ==================================================================
